@@ -69,3 +69,12 @@ export NODE_OPTIONS=--openssl-legacy-provider
 # 设置node版本到v18
 nvm use v18
 ```
+
+
+```
+docker run -d  --name redis   -p 6379:6379   -v redis_data:/data  --restart unless-stopped   docker.1ms.run/bitnami/redis:latest   redis-server --requirepass admin555 --appendonly yes
+```
+
+```
+docker run -d --name mysql -p 3306:3306 -v mysql_data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=admin555 -e TZ=Asia/Shanghai --restart unless-stopped swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/mysql:5.6.51
+ ```
