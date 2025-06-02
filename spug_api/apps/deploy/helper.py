@@ -46,7 +46,6 @@ class Helper:
             f'**申请标题：** {req.name}',
             f'**应用名称：** {req.deploy.app.name}',
             f'**应用版本：** {version}',
-            f'**镜像版本：** {req.image_version or "无"}',
             f'**发布环境：** {req.deploy.env.name}',
             f'**发布主机：** {host_str}',
         ]
@@ -97,7 +96,6 @@ class Helper:
             f'申请标题： {req.name}',
             f'应用名称： {req.deploy.app.name}',
             f'应用版本： {version}',
-            f'镜像版本： {req.image_version or "无"}',
             f'发布环境： {req.deploy.env.name}',
             f'发布主机： {host_str}',
         ]
@@ -145,7 +143,6 @@ class Helper:
             f'申请标题： {req.name}',
             f'应用名称： {req.deploy.app.name}',
             f'应用版本： {version}',
-            f'镜像版本： {req.image_version or "无"}',
             f'发布环境： {req.deploy.env.name}',
             f'发布主机： {host_str}',
         ]
