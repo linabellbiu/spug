@@ -43,11 +43,11 @@ class Helper:
     @classmethod
     def _make_dd_notify(cls, url, action, req, version, host_str):
         texts = [
-            f'**申请标题：** {req.name}',
-            f'**应用名称：** {req.deploy.app.name}',
-            f'**应用版本：** {version}',
-            f'**发布环境：** {req.deploy.env.name}',
-            f'**发布主机：** {host_str}',
+            f'**申请标题：** <font color="#1E90FF">{req.name}</font>',
+            f'**应用名称：** <font color="#FF4500">{req.deploy.app.name}</font>',
+            f'**应用版本：** <font color="#9370DB">{version}</font>',
+            f'**发布环境：** <font color="#2E8B57">{req.deploy.env.name}</font>',
+            f'**发布主机：** <font color="#CD853F">{host_str}</font>',
         ]
         if action == 'approve_req':
             texts.insert(0, '## %s ## ' % '发布审核申请')
@@ -93,11 +93,11 @@ class Helper:
     @classmethod
     def _make_wx_notify(cls, url, action, req, version, host_str):
         texts = [
-            f'申请标题： {req.name}',
-            f'应用名称： {req.deploy.app.name}',
-            f'应用版本： {version}',
-            f'发布环境： {req.deploy.env.name}',
-            f'发布主机： {host_str}',
+            f'申请标题： <font color="#1E90FF">{req.name}</font>',
+            f'应用名称： <font color="#FF4500">{req.deploy.app.name}</font>',
+            f'应用版本： <font color="#9370DB">{version}</font>',
+            f'发布环境： <font color="#2E8B57">{req.deploy.env.name}</font>',
+            f'发布主机： <font color="#CD853F">{host_str}</font>',
         ]
 
         if action == 'approve_req':
