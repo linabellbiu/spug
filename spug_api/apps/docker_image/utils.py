@@ -132,10 +132,16 @@ def dispatch(rep: DockerImage, helper=None, env=None):
             if container is not None:
                 helper.send_info('image', f'\r\n{human_time()} \033[31m检查镜像仓库是否存在{env.SPUG_IMAGE_NAME}:{env.SPUG_IMAGE_VERSION}\033[0m        ')
                 # 本地镜像仓库已经存在，则直接抛错终止【不允许覆盖】
-                images = DockerImage.objects.filter(app_id=rep.app_id, env_id=rep.env_id, version=rep.version, status='5')
+                images = DockerImage.objects.filter(
+                    app_id=rep.app_id, 
+                    env_id=rep.env_id, 
+                    version=rep.version, 
+                    status='5',
+                    url__endswith=f':{env.SPUG_IMAGE_VERSION}'  # 增加对镜像版本的判断
+                )
                 if images.exists():
                     helper.send_info('image', f'\r\n{human_time()} \033[31m远程仓库已经存在对应版本的镜像，编译镜像终止。不允许覆盖镜像 {env.SPUG_IMAGE_NAME}:{env.SPUG_IMAGE_VERSION}。 发布后台服务可以选择当前已经编译上传过的镜像 或 将镜像版本固定不设置动态的\033[0m        ')
-                    raise Exception("远程仓库已经存在对应代码版本的镜像，编译镜像终止。不允许覆盖镜像。 发布后台服务可以选择当前已经编译上传过的镜像")
+                    raise Exception("远程仓库已经存在对应版本的镜像，编译镜像终止。不允许覆盖镜像。 发布后台服务可以选择当前已经编译上传过的镜像")
                 
         helper.send_info('image', f'\033[32m完成√\033[0m\r\n{human_time()} 开始编译镜像...        ')
     

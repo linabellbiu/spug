@@ -9,4 +9,4 @@ nvm use v18
 export NODE_OPTIONS=--openssl-legacy-provider
 npm start
 
-redis-server
+systemctl restart supervisord
