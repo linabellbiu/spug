@@ -1,0 +1,15 @@
+version: '3.8'  # 使用稳定的 Compose 文件版本
+
+services:
+  spug-web:
+    # 构建配置：基于你提供的 Dockerfile 构建镜像
+    build:
+      context: .  # 指定 Dockerfile 所在的目录（当前目录）
+      dockerfile: Dockerfile  # 指定 Dockerfile 文件名（默认就是这个，可省略）
+    # 容器名称（可选，方便管理）
+    container_name: spug-web
+    # 端口映射：主机 3000 端口 -> 容器 80 端口（Dockerfile 里暴露的是 80）
+    ports:
+      - "3000:80"
+    # 重启策略：容器异常退出时自动重启（生产环境推荐）
+    restart: always
