@@ -108,9 +108,10 @@ function ComTable() {
       <Table.Column title="应用" dataIndex="app_name"/>
       <Table.Column title="标签" render={(info) => (
         <div>
-          {info.app_rel_tags?.length > 0 ? info.app_rel_tags.map(tid => (
-            <Tag style={{ border: 'none' }} color="orange" key={`tag-${tid}`}>{tags.find(item => item.id === tid)?.name}</Tag>
-          )) : null}
+          {Array.isArray(info.app_rel_tags) && info.app_rel_tags.length > 0 ? info.app_rel_tags.map(tid => {
+            const tag = tags.find(item => item.id === tid);
+            return tag ? <Tag style={{ border: 'none' }} color="orange" key={`tag-${tid}`}>{tag.name}</Tag> : null;
+          }) : null}
         </div>
       )}
       />

@@ -33,9 +33,10 @@ export default observer(function Ext1From() {
         <div>
           {store.deploy.env_name ? <Tag color="#108ee9">{store.deploy.env_name}</Tag> : null}
           {title}
-          {store.deploy.app_rel_tags?.length > 0 ? store.deploy.app_rel_tags.map(tid => (
-              <Tag style={{ border: 'none' }} color="orange" key={`tag-${tid}`}>{appTags.find(item => item.id === tid).name}</Tag>
-            )) : null}
+          {Array.isArray(store.deploy.app_rel_tags) && store.deploy.app_rel_tags.length > 0 ? store.deploy.app_rel_tags.map(tid => {
+              const tag = appTags.find(item => item.id === tid);
+              return tag ? <Tag style={{ border: 'none' }} color="orange" key={`tag-${tid}`}>{tag.name}</Tag> : null;
+            }) : null}
           {store.deploy.env_prod ? <Tag color="#f50">生产环境</Tag> : null}
         </div>
       }

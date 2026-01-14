@@ -65,16 +65,18 @@ def dispatch(rep: Repository, helper=None):
 
 def _build(rep: Repository, helper, env):
     extend = rep.deploy.extend_obj
-    extras = json.loads(rep.extra)
+    extras = json.loads(rep.extra) if rep.extra else []
     git_dir = os.path.join(REPOS_DIR, str(rep.deploy_id))
     build_dir = os.path.join(REPOS_DIR, rep.spug_version)
     tar_file = os.path.join(BUILD_DIR, f'{rep.spug_version}.tar.gz')
-    if extras[0] == 'branch':
+    if extras and extras[0] == 'branch':
         tree_ish = extras[2]
         env.update(SPUG_GIT_BRANCH=extras[1], SPUG_GIT_COMMIT_ID=extras[2])
-    else:
+    elif extras:
         tree_ish = extras[1]
         env.update(SPUG_GIT_TAG=extras[1])
+    else:
+        tree_ish = 'HEAD'
     env.update(SPUG_DST_DIR=render_str(extend.dst_dir, env))
     fetch_repo(rep.deploy_id, extend.git_repo)
     helper.send_info('local', '\033[32m完成√\033[0m\r\n')

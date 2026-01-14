@@ -106,12 +106,12 @@ def _ext1_deploy(req, helper, env):
         )
         build_repository(rep, helper)
         req.repository = rep
-    extras = json.loads(req.extra)
-    if extras[0] == 'repository':
+    extras = json.loads(req.extra) if req.extra else []
+    if extras and extras[0] == 'repository':
         extras = extras[1:]
-    if extras[0] == 'branch':
+    if extras and extras[0] == 'branch':
         env.update(SPUG_GIT_BRANCH=extras[1], SPUG_GIT_COMMIT_ID=extras[2])
-    else:
+    elif extras:
         env.update(SPUG_GIT_TAG=extras[1])
     if req.deploy.is_parallel:
         threads, latest_exception = [], None
@@ -256,21 +256,21 @@ def _ext3_deploy(req, helper, env):
         req.repository = rep
     else:
         helper.send_info('local', f'\r\n \033[32m使用构建仓库\033[0m \r\n id:[{req.repository_id}] \r\n 环境:[{req.repository.env.name}] \r\n 版本:[{req.repository.version}] \r\n 创建时间:[{req.repository.created_at}] \r\n 创建人:[{req.repository.created_by.nickname}] \r\n 备注:[{req.repository.remarks}] \r\n \033[32m完成√\033[0m\r\n')
-    extras = json.loads(req.extra)
-    if extras[0] == 'repository':
+    extras = json.loads(req.extra) if req.extra else []
+    if extras and extras[0] == 'repository':
         extras = extras[1:]
-    if extras[0] == 'branch':
+    if extras and extras[0] == 'branch':
         env.update(SPUG_GIT_BRANCH=extras[1], SPUG_GIT_COMMIT_ID=extras[2])
-    if extras[0] == 'docker_image':
+    if extras and extras[0] == 'docker_image':
         extras = extras[1:]
         # 设置变量
-        if extras[0] == 'repository':
+        if extras and extras[0] == 'repository':
                 extras = extras[1:]
-        if extras[0] == 'branch':
+        if extras and extras[0] == 'branch':
             env.update(SPUG_GIT_BRANCH=extras[1], SPUG_GIT_COMMIT_ID=extras[2])
-        else:
+        elif extras:
             env.update(SPUG_GIT_TAG=extras[1])
-    else:
+    elif extras and len(extras) > 1:
         env.update(SPUG_GIT_TAG=extras[1])
         
     extend = req.deploy.extend_obj

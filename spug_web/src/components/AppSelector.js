@@ -48,7 +48,7 @@ export default observer(function AppSelector(props) {
 
   let records = deploys.filter(x => x.env_id === Number(env_id));
   if (search) records = records.filter(x => includes(x['app_name'], search) || includes(x['app_key'], search));
-  if (search_tag) records = records.filter(x => x['app_rel_tags'].includes(search_tag));
+  if (search_tag) records = records.filter(x => Array.isArray(x['app_rel_tags']) && x['app_rel_tags'].includes(search_tag));
   if (props.filter) records = records.filter(x => props.filter(x));
   // 重启只能选择容器镜像的发布
   if (props.restart) records = records.filter(x => x['extend'] === '3');

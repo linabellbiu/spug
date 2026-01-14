@@ -121,9 +121,10 @@ export default observer(function () {
         <div>
           {store.deploy.env_name ? <Tag color="#108ee9">{store.deploy.env_name}</Tag> : null}
           <span>新建构建【<b>{store.deploy.app_name}</b>】</span>
-          {store.deploy.app_rel_tags?.length > 0 && Array.isArray(appTags) ? store.deploy.app_rel_tags.map(tid => (
-            appTags.find(item => item.id === tid) ? <Tag style={{ border: 'none' }} color="orange" key={`tag-${tid}`}>{appTags.find(item => item.id === tid).name}</Tag> : null
-          )) : null}
+          {Array.isArray(store.deploy.app_rel_tags) && store.deploy.app_rel_tags.length > 0 && Array.isArray(appTags) ? store.deploy.app_rel_tags.map(tid => {
+            const tag = appTags.find(item => item.id === tid);
+            return tag ? <Tag style={{ border: 'none' }} color="orange" key={`tag-${tid}`}>{tag.name}</Tag> : null;
+          }) : null}
           {store.deploy.env_prod ? <Tag color="#f50">生产环境</Tag> : null}
         </div>
       }

@@ -22,7 +22,7 @@ class Store {
 
   @computed get dataSource() {
     let records = this.records;
-    if (this.f_tag)    records = records.filter(x => x.app_rel_tags.includes(this.f_tag));
+    if (this.f_tag)    records = records.filter(x => Array.isArray(x.app_rel_tags) && x.app_rel_tags.includes(this.f_tag));
     if (this.f_app_id) records = records.filter(x => x.app_id === this.f_app_id);
     if (this.f_env_id) records = records.filter(x => x.env_id === this.f_env_id);
     return records

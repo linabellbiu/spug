@@ -191,9 +191,10 @@ export default observer(function () {
         <div>
           {env.env_name ? <Tag color="#108ee9">{env.env_name}</Tag> : ''}
           {store.record.id ? '编辑' : '新建'}<b>【{env.app_name}】</b>发布申请&ensp;
-          {env.app_rel_tags?.length > 0 ? env.app_rel_tags.map(tid => (
-              <Tag style={{ border: 'none' }} color="orange" key={`tag-${tid}`}>{appTags.find(item => item.id === tid).name}</Tag>
-            )) : ''}
+          {Array.isArray(env.app_rel_tags) && env.app_rel_tags.length > 0 ? env.app_rel_tags.map(tid => {
+              const tag = appTags.find(item => item.id === tid);
+              return tag ? <Tag style={{ border: 'none' }} color="orange" key={`tag-${tid}`}>{tag.name}</Tag> : null;
+            }) : ''}
           {env.env_prod ? <Tag color="#f50">生产环境</Tag> : ''}
         </div>
       }

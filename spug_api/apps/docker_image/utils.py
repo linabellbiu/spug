@@ -63,12 +63,12 @@ def dispatch(rep: DockerImage, helper=None, env=None):
                 rep.repository = repi
             else:
                 helper.send_info('local', f'\r\n \033[32m使用构建仓库\033[0m \r\n id:[{rep.repository_id}] \r\n 环境:[{rep.repository.env.name}] \r\n version:[{rep.repository.version}] \r\n 创建时间:[{rep.repository.created_at}] \r\n 创建人:[{rep.repository.created_by.nickname}] \r\n \033[32m完成√\033[0m\r\n')
-            extras = json.loads(rep.extra)
-            if extras[0] == 'repository':
+            extras = json.loads(rep.extra) if rep.extra else []
+            if extras and extras[0] == 'repository':
                 extras = extras[1:]
-            if extras[0] == 'branch':
+            if extras and extras[0] == 'branch':
                 env.update(SPUG_GIT_BRANCH=extras[1], SPUG_GIT_COMMIT_ID=extras[2])
-            else:
+            elif extras:
                 env.update(SPUG_GIT_TAG=extras[1])
             
             # 查询
@@ -135,7 +135,7 @@ def dispatch(rep: DockerImage, helper=None, env=None):
                 images = DockerImage.objects.filter(app_id=rep.app_id, env_id=rep.env_id, version=rep.version, status='5')
                 if images.exists():
                     helper.send_info('image', f'\r\n{human_time()} \033[31m远程仓库已经存在对应版本的镜像，编译镜像终止。不允许覆盖镜像 {env.SPUG_IMAGE_NAME}:{env.SPUG_IMAGE_VERSION}。 发布后台服务可以选择当前已经编译上传过的镜像 或 将镜像版本固定不设置动态的\033[0m        ')
-                    raise Exception("远程仓库已经存在对应代码版本的镜像，编译镜像终止。不允许覆盖镜像。 发布后台服务可以选择当前已经编译上传过的镜像")
+                    # raise Exception("远程仓库已经存在对应代码版本的镜像，编译镜像终止。不允许覆盖镜像。 发布后台服务可以选择当前已经编译上传过的镜像")
                 
         helper.send_info('image', f'\033[32m完成√\033[0m\r\n{human_time()} 开始编译镜像...        ')
     

@@ -57,7 +57,8 @@ function ComTable() {
     className: S.min80,
     render: info => {
       if (info['app_extend'] === '1' || info['app_extend'] === '3') {
-        const [ext1] = info.extra || info.rep_extra;
+        const extraData = info.extra || info.rep_extra || [];
+        const [ext1] = extraData;
         switch (ext1) {
           case 'branch':
             return <div><Tooltip title={"分支"}><BranchesOutlined/></Tooltip> {info.version}</div>
@@ -79,9 +80,10 @@ function ComTable() {
     className: S.min80,
     render: info => {
       return (<div>
-              {info.app_rel_tags?.length > 0 ? info.app_rel_tags.map(tid => (
-                <Tag style={{ border: 'none' }} color="orange" key={`tag-${tid}`}>{tagStore.records.find(item => item.id === tid)?.name}</Tag>
-              )) : ''}
+              {Array.isArray(info.app_rel_tags) && info.app_rel_tags.length > 0 ? info.app_rel_tags.map(tid => {
+                const tag = tagStore.records?.find(item => item.id === tid);
+                return tag ? <Tag style={{ border: 'none' }} color="orange" key={`tag-${tid}`}>{tag.name}</Tag> : null;
+              }) : ''}
             </div>)
     }
   }, {

@@ -38,7 +38,7 @@ class DockerImage(models.Model, ModelMixin):
 
     def to_view(self):
         tmp = self.to_dict()
-        tmp['extra'] = json.loads(self.extra)
+        tmp['extra'] = json.loads(self.extra) if self.extra else []
         tmp['status_alias'] = self.get_status_display()
         if hasattr(self, 'app_name'):
             tmp['app_name'] = self.app_name
