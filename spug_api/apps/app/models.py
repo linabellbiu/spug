@@ -18,6 +18,7 @@ class App(models.Model, ModelMixin):
     rel_tags = models.TextField(null=True)
     rel_apps = models.TextField(null=True)
     rel_services = models.TextField(null=True)
+    webhook_config = models.TextField(null=True)
     sort_id = models.IntegerField(default=0, db_index=True)
     created_at = models.CharField(max_length=20, default=human_datetime)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -27,6 +28,7 @@ class App(models.Model, ModelMixin):
         tmp['rel_tags'] = json.loads(self.rel_tags) if self.rel_tags else []
         tmp['rel_apps'] = json.loads(self.rel_apps) if self.rel_apps else []
         tmp['rel_services'] = json.loads(self.rel_services) if self.rel_services else []
+        tmp['webhook_config'] = json.loads(self.webhook_config) if self.webhook_config else {}
         return tmp
 
     def __repr__(self):

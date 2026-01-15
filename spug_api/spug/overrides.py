@@ -7,7 +7,7 @@ DATABASES = {
         'NAME': 'spug',             # 替换为自己的数据库名，请预先创建好编码为utf8mb4的数据库
         'USER': 'root',        # 数据库用户名
         'PASSWORD': '476UYR4',  # 数据库密码
-        'HOST': '192.168.0.206',        # 数据库地址
+        'HOST': '121.91.172.255',        # 数据库地址
         'OPTIONS': {
             'charset': 'utf8mb4',
             'sql_mode': 'STRICT_TRANS_TABLES',
@@ -19,7 +19,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://:audit476UYR4@192.168.0.206:6379/1",
+        "LOCATION": "redis://:audit476UYR4@121.91.172.255:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -30,7 +30,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": ["redis://:audit476UYR4@192.168.0.206:6379/2"],
+            "hosts": ["redis://:audit476UYR4@121.91.172.255:6379/2"],
         },
     },
 }

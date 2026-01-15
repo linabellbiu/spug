@@ -8,6 +8,7 @@ from .views import *
 urlpatterns = [
     path('', AppView.as_view()),
     path('kit/key/', kit_key),
+    path('webhook/config/', webhook_config),
     path('deploy/', DeployView.as_view()),
     path('deploy/<int:deploy_id>/info/', get_info),
     path('deploy/<int:d_id>/versions/', get_versions),

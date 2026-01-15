@@ -8,5 +8,5 @@ from apps.apis import deploy
 
 urlpatterns = [
     path('config/', config.get_configs),
-    path('deploy/<int:deploy_id>/', deploy.auto_deploy)
+    path('deploy/<int:app_id>/', deploy.auto_deploy)
 ]

@@ -267,3 +267,32 @@ def kit_key(request):
         api_key = AppSetting.get_default(form.key)
         return json_response(api_key)
     return json_response(error=error)
+
+
+@auth('deploy.app.config')
+def webhook_config(request):
+    if request.method == 'GET':
+        form, error = JsonParser(
+            Argument('app_id', type=int, help='参数错误')
+        ).parse(request.GET)
+        if error is None:
+            app = App.objects.filter(pk=form.app_id).first()
+            if not app:
+                return json_response(error='未找到指定应用')
+            webhook_config = json.loads(app.webhook_config) if app.webhook_config else {}
+            return json_response(webhook_config)
+        return json_response(error=error)
+    
+    elif request.method == 'POST':
+        form, error = JsonParser(
+            Argument('app_id', type=int, help='参数错误'),
+            Argument('webhook_config', type=dict, help='参数错误')
+        ).parse(request.body)
+        if error is None:
+            app = App.objects.filter(pk=form.app_id).first()
+            if not app:
+                return json_response(error='未找到指定应用')
+            app.webhook_config = json.dumps(form.webhook_config)
+            app.save()
+            return json_response()
+        return json_response(error=error)

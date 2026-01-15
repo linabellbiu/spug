@@ -84,8 +84,9 @@ class Store {
     }
   };
 
-  showAutoDeploy = (deploy) => {
-    this.deploy = deploy;
+  showAutoDeploy = (e, app_id) => {
+    if (e) e.stopPropagation();
+    this.app_id = app_id;
     this.autoVisible = true
   }
 

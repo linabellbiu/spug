@@ -3,6 +3,7 @@
 # Released under the AGPL-3.0 License.
 from django.http.response import HttpResponseBadRequest, HttpResponseForbidden, HttpResponse
 from apps.setting.utils import AppSetting
+from apps.app.models import App
 from apps.deploy.models import Deploy, DeployRequest
 from apps.repository.models import Repository
 from apps.deploy.utils import dispatch as deploy_dispatch
@@ -11,9 +12,10 @@ from threading import Thread
 import hashlib
 import hmac
 import json
+import re
 
 
-def auto_deploy(request, deploy_id):
+def auto_deploy(request, app_id):
     repo, body = _parse_request(request)
     if not repo:
         return HttpResponseForbidden()
@@ -23,7 +25,7 @@ def auto_deploy(request, deploy_id):
         if _is_merge_request(body, repo):
             ref, commit_id, message = _parse_merge_request(body, repo)
             if ref and commit_id:
-                Thread(target=_dispatch, args=(deploy_id, ref, commit_id, message)).start()
+                Thread(target=_dispatch_by_branch, args=(app_id, ref, commit_id, message)).start()
                 return HttpResponse(status=202)
             return HttpResponse(status=204)
         
@@ -39,7 +41,7 @@ def auto_deploy(request, deploy_id):
             # 忽略删除分支的操作（commit_id 为全0）
             if commit_id and commit_id != '0000000000000000000000000000000000000000':
                 message = _parse_message(body, repo)
-                Thread(target=_dispatch, args=(deploy_id, ref, commit_id, message)).start()
+                Thread(target=_dispatch_by_branch, args=(app_id, ref, commit_id, message)).start()
                 return HttpResponse(status=202)
         
         # Tag push
@@ -48,7 +50,7 @@ def auto_deploy(request, deploy_id):
             commit_id = body.get('after', '')
             if not commit_id or commit_id == '0000000000000000000000000000000000000000':
                 return HttpResponse(status=204)
-            Thread(target=_dispatch, args=(deploy_id, ref)).start()
+            Thread(target=_dispatch_by_branch, args=(app_id, ref, None, None)).start()
             return HttpResponse(status=202)
         
         return HttpResponse(status=204)
@@ -164,6 +166,42 @@ def _parse_merge_request(body, repo):
         return ref, commit_id, message[:20].strip()
     except Exception:
         return None, None, None
+
+
+def _dispatch_by_branch(app_id, ref, commit_id=None, message=None):
+    app = App.objects.filter(pk=app_id).first()
+    if not app:
+        raise Exception(f'no such app id for {app_id}')
+    
+    webhook_config = json.loads(app.webhook_config) if app.webhook_config else {}
+    
+    for env_id_str, branch_pattern in webhook_config.items():
+        if not branch_pattern:
+            continue
+        
+        env_id = int(env_id_str)
+        
+        if _match_branch(ref, branch_pattern):
+            deploy = Deploy.objects.filter(app_id=app_id, env_id=env_id).first()
+            if deploy:
+                _dispatch(deploy.id, ref, commit_id, message)
+
+
+def _match_branch(branch, pattern):
+    if not pattern:
+        return False
+    
+    pattern = pattern.strip()
+    if not pattern:
+        return False
+    
+    if pattern == '*':
+        return True
+    
+    try:
+        return re.match(pattern, branch) is not None
+    except Exception:
+        return branch == pattern
 
 
 def _dispatch(deploy_id, ref, commit_id=None, message=None):

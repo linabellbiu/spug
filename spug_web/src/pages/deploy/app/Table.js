@@ -111,9 +111,6 @@ function ComTable() {
         {hasPermission('deploy.app.config|deploy.app.edit') && (
           <Table.Column title="操作" render={info => (
             <Action>
-              <Action.Button
-                auth="deploy.app.config"
-                onClick={e => store.showAutoDeploy(info)}>Webhook</Action.Button>
               {hasPermission('deploy.app.edit') ? (
                 <Action.Button onClick={e => store.showExtForm(e, record.id, info)}>编辑</Action.Button>
               ) : hasPermission('deploy.app.config') ? (
@@ -173,9 +170,12 @@ function ComTable() {
         />
       <Table.Column title="标识符" dataIndex="key"/>
       <Table.Column ellipsis title="描述信息" dataIndex="desc"/>
-      {hasPermission('deploy.app.edit|deploy.app.del') && (
-        <Table.Column width={260} title="操作" render={info => (
+      {hasPermission('deploy.app.edit|deploy.app.del|deploy.app.config') && (
+        <Table.Column width={320} title="操作" render={info => (
           <Action>
+            <Action.Button 
+              auth="deploy.app.config" 
+              onClick={e => store.showAutoDeploy(e, info.id)}>Webhook</Action.Button>
             <Action.Button auth="deploy.app.edit" onClick={e => store.showExtForm(e, info.id)}>新建发布</Action.Button>
             <Action.Button auth="deploy.app.edit" onClick={e => handleClone(e, info.id)}>克隆发布</Action.Button>
             <Action.Button auth="deploy.app.edit" onClick={e => store.showForm(e, info)}>编辑</Action.Button>
