@@ -13,25 +13,47 @@ import hmac
 import json
 
 
-def auto_deploy(request, deploy_id, kind):
+def auto_deploy(request, deploy_id):
     repo, body = _parse_request(request)
     if not repo:
         return HttpResponseForbidden()
 
     try:
+        # 判断是否是 merge request/pull request
+        if _is_merge_request(body, repo):
+            ref, commit_id, message = _parse_merge_request(body, repo)
+            if ref and commit_id:
+                Thread(target=_dispatch, args=(deploy_id, ref, commit_id, message)).start()
+                return HttpResponse(status=202)
+            return HttpResponse(status=204)
+        
+        # 处理普通的 push 事件（branch 或 tag）
+        if 'ref' not in body:
+            return HttpResponse(status=204)
+            
         _, _kind, ref = body['ref'].split('/', 2)
-        if kind == 'branch' and _kind == 'heads':
-            commit_id = body['after']
-            if commit_id != '0000000000000000000000000000000000000000' and ref == request.GET.get('name'):
+        
+        # Branch push
+        if _kind == 'heads':
+            commit_id = body.get('after', '')
+            # 忽略删除分支的操作（commit_id 为全0）
+            if commit_id and commit_id != '0000000000000000000000000000000000000000':
                 message = _parse_message(body, repo)
                 Thread(target=_dispatch, args=(deploy_id, ref, commit_id, message)).start()
                 return HttpResponse(status=202)
-        elif kind == 'tag' and _kind == 'tags':
+        
+        # Tag push
+        elif _kind == 'tags':
+            # 忽略删除 tag 的操作
+            commit_id = body.get('after', '')
+            if not commit_id or commit_id == '0000000000000000000000000000000000000000':
+                return HttpResponse(status=204)
             Thread(target=_dispatch, args=(deploy_id, ref)).start()
             return HttpResponse(status=202)
+        
         return HttpResponse(status=204)
     except Exception as e:
-        return HttpResponseBadRequest(e)
+        return HttpResponseBadRequest(str(e))
 
 
 def _parse_request(request):
@@ -91,6 +113,57 @@ def _parse_message(body, repo):
     else:
         raise ValueError(f'repo {repo} is not supported')
     return message[:20].strip()
+
+
+def _is_merge_request(body, repo):
+    """判断是否是 merge request/pull request 事件"""
+    if repo == 'Gitlab':
+        return body.get('object_kind') == 'merge_request' and body.get('object_attributes', {}).get('action') == 'merge'
+    elif repo == 'Gitee':
+        return body.get('action') == 'merge' and 'pull_request' in body
+    elif repo == 'Github':
+        return body.get('action') == 'closed' and body.get('pull_request', {}).get('merged') is True
+    elif repo == 'Coding':
+        return body.get('action') == 'merge' and 'merge_request' in body
+    elif repo == 'Codeup':
+        return body.get('object_kind') == 'merge_request' and body.get('object_attributes', {}).get('action') == 'merge'
+    return False
+
+
+def _parse_merge_request(body, repo):
+    """解析 merge request/pull request 信息，返回目标分支、commit_id 和消息"""
+    try:
+        if repo == 'Gitlab':
+            attrs = body.get('object_attributes', {})
+            ref = attrs.get('target_branch', '')
+            commit_id = attrs.get('merge_commit_sha', '')
+            message = f"Merge: {attrs.get('title', '')}"
+        elif repo == 'Gitee':
+            pr = body.get('pull_request', {})
+            ref = pr.get('base', {}).get('ref', '')
+            commit_id = pr.get('merge_commit_sha', '')
+            message = f"Merge: {pr.get('title', '')}"
+        elif repo == 'Github':
+            pr = body.get('pull_request', {})
+            ref = pr.get('base', {}).get('ref', '')
+            commit_id = pr.get('merge_commit_sha', '')
+            message = f"Merge: {pr.get('title', '')}"
+        elif repo == 'Coding':
+            mr = body.get('merge_request', {})
+            ref = mr.get('target_branch', '')
+            commit_id = mr.get('merge_commit_sha', '')
+            message = f"Merge: {mr.get('title', '')}"
+        elif repo == 'Codeup':
+            attrs = body.get('object_attributes', {})
+            ref = attrs.get('target_branch', '')
+            commit_id = attrs.get('merge_commit_sha', '')
+            message = f"Merge: {attrs.get('title', '')}"
+        else:
+            return None, None, None
+        
+        return ref, commit_id, message[:20].strip()
+    except Exception:
+        return None, None, None
 
 
 def _dispatch(deploy_id, ref, commit_id=None, message=None):
