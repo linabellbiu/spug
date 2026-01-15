@@ -87,7 +87,13 @@ class Store {
   showAutoDeploy = (e, app_id) => {
     if (e) e.stopPropagation();
     this.app_id = app_id;
-    this.autoVisible = true
+    if (!this.records[`a${app_id}`]?.isLoaded) {
+      this.loadDeploys(app_id).then(() => {
+        this.autoVisible = true;
+      });
+    } else {
+      this.autoVisible = true;
+    }
   }
 
   addHost = () => {
