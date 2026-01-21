@@ -21,11 +21,14 @@ def auto_deploy(request, app_id):
         return HttpResponseForbidden()
 
     try:
+        # 提取webhook请求中的仓库地址
+        repo_url = _parse_repo_url(body, repo)
+        
         # 判断是否是 merge request/pull request
         if _is_merge_request(body, repo):
             ref, commit_id, message = _parse_merge_request(body, repo)
             if ref and commit_id:
-                Thread(target=_dispatch_by_branch, args=(app_id, ref, commit_id, message)).start()
+                Thread(target=_dispatch_by_branch, args=(app_id, ref, commit_id, message, repo_url)).start()
                 return HttpResponse(status=202)
             return HttpResponse(status=204)
         
@@ -41,7 +44,7 @@ def auto_deploy(request, app_id):
             # 忽略删除分支的操作（commit_id 为全0）
             if commit_id and commit_id != '0000000000000000000000000000000000000000':
                 message = _parse_message(body, repo)
-                Thread(target=_dispatch_by_branch, args=(app_id, ref, commit_id, message)).start()
+                Thread(target=_dispatch_by_branch, args=(app_id, ref, commit_id, message, repo_url)).start()
                 return HttpResponse(status=202)
         
         # Tag push
@@ -50,7 +53,7 @@ def auto_deploy(request, app_id):
             commit_id = body.get('after', '')
             if not commit_id or commit_id == '0000000000000000000000000000000000000000':
                 return HttpResponse(status=204)
-            Thread(target=_dispatch_by_branch, args=(app_id, ref, None, None)).start()
+            Thread(target=_dispatch_by_branch, args=(app_id, ref, None, None, repo_url)).start()
             return HttpResponse(status=202)
         
         return HttpResponse(status=204)
@@ -168,7 +171,59 @@ def _parse_merge_request(body, repo):
         return None, None, None
 
 
-def _dispatch_by_branch(app_id, ref, commit_id=None, message=None):
+def _parse_repo_url(body, repo):
+    """从webhook payload中提取仓库地址"""
+    try:
+        if repo == 'Gitlab':
+            project = body.get('project', {})
+            return project.get('git_http_url') or project.get('http_url') or project.get('git_ssh_url') or project.get('ssh_url')
+        elif repo == 'Gitee':
+            repository = body.get('repository', {})
+            return repository.get('url') or repository.get('html_url') or repository.get('ssh_url')
+        elif repo == 'Github':
+            repository = body.get('repository', {})
+            return repository.get('clone_url') or repository.get('html_url') or repository.get('ssh_url')
+        elif repo == 'Coding':
+            repository = body.get('repository', {})
+            return repository.get('https_url') or repository.get('ssh_url') or repository.get('web_url')
+        elif repo == 'Codeup':
+            project = body.get('project', {})
+            return project.get('git_http_url') or project.get('http_url') or project.get('git_ssh_url') or project.get('ssh_url')
+        elif repo == 'Gogs':
+            repository = body.get('repository', {})
+            return repository.get('clone_url') or repository.get('html_url') or repository.get('ssh_url')
+        return None
+    except Exception:
+        return None
+
+
+def _normalize_repo_url(url):
+    """规范化仓库地址，去除协议、用户名、.git后缀等，便于比较"""
+    if not url:
+        return ''
+    
+    url = url.lower().strip()
+    
+    # 去除协议
+    for prefix in ['https://', 'http://', 'git://', 'ssh://', 'git@']:
+        if url.startswith(prefix):
+            url = url[len(prefix):]
+            break
+    
+    # 处理 git@ 格式的 SSH URL (git@github.com:user/repo.git)
+    url = url.replace(':', '/')
+    
+    # 去除 .git 后缀
+    if url.endswith('.git'):
+        url = url[:-4]
+    
+    # 去除末尾的斜杠
+    url = url.rstrip('/')
+    
+    return url
+
+
+def _dispatch_by_branch(app_id, ref, commit_id=None, message=None, repo_url=None):
     app = App.objects.filter(pk=app_id).first()
     if not app:
         raise Exception(f'no such app id for {app_id}')
@@ -184,6 +239,10 @@ def _dispatch_by_branch(app_id, ref, commit_id=None, message=None):
         if _match_branch(ref, branch_pattern):
             deploy = Deploy.objects.filter(app_id=app_id, env_id=env_id).first()
             if deploy:
+                # 验证仓库地址是否匹配
+                if not _match_repo_url(deploy, repo_url):
+                    continue
+                
                 _dispatch(deploy.id, ref, commit_id, message)
 
 
@@ -202,6 +261,28 @@ def _match_branch(branch, pattern):
         return re.match(pattern, branch) is not None
     except Exception:
         return branch == pattern
+
+
+def _match_repo_url(deploy, webhook_repo_url):
+    """验证webhook请求的仓库地址是否与部署配置的仓库地址匹配"""
+    if not webhook_repo_url:
+        return True
+    
+    # 获取部署配置中的仓库地址
+    deploy_repo_url = None
+    if deploy.extend in ('1', '3'):
+        extend_obj = deploy.extend_obj
+        if extend_obj and hasattr(extend_obj, 'git_repo'):
+            deploy_repo_url = extend_obj.git_repo
+    
+    if not deploy_repo_url:
+        return True
+    
+    # 规范化后比较
+    normalized_webhook_url = _normalize_repo_url(webhook_repo_url)
+    normalized_deploy_url = _normalize_repo_url(deploy_repo_url)
+    
+    return normalized_webhook_url == normalized_deploy_url
 
 
 def _dispatch(deploy_id, ref, commit_id=None, message=None):
