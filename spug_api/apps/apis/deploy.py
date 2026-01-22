@@ -74,6 +74,9 @@ def _parse_request(request):
     elif 'X-Codeup-Token' in request.headers:
         token = request.headers['X-Codeup-Token']
         repo = 'Codeup'
+    elif 'X-Gitea-Signature' in request.headers:
+        token = request.headers['X-Gitea-Signature']
+        repo = 'Gitea'
     elif 'X-Gogs-Signature' in request.headers:
         token = request.headers['X-Gogs-Signature']
         repo = 'Gogs'
@@ -90,7 +93,7 @@ def _parse_request(request):
     if repo in ['Gitlab', 'Gitee', 'Codeup']:
         if token != api_key:
             return None, None
-    elif repo in ['Github', 'Gogs']:
+    elif repo in ['Github', 'Gogs', 'Gitea']:
         en_api_key = hmac.new(api_key.encode(), request.body, hashlib.sha256).hexdigest()
         if token != en_api_key:
             return None, None
@@ -102,7 +105,7 @@ def _parse_request(request):
         return None, None
 
     body = json.loads(request.body)
-    if repo == 'Gogs' and not body['ref'].startswith('refs/'):
+    if repo in ['Gogs', 'Gitea'] and not body['ref'].startswith('refs/'):
         body['ref'] = 'refs/tags/' + body['ref']
 
     return repo, body
@@ -110,7 +113,7 @@ def _parse_request(request):
 
 def _parse_message(body, repo):
     message = None
-    if repo in ['Gitee', 'Github', 'Coding']:
+    if repo in ['Gitee', 'Github', 'Coding', 'Gitea']:
         message = body.get('head_commit', {}).get('message', '')
     elif repo in ['Gitlab', 'Codeup', 'Gogs']:
         if body.get('commits'):
@@ -189,7 +192,7 @@ def _parse_repo_url(body, repo):
         elif repo == 'Codeup':
             project = body.get('project', {})
             return project.get('git_http_url') or project.get('http_url') or project.get('git_ssh_url') or project.get('ssh_url')
-        elif repo == 'Gogs':
+        elif repo in ['Gogs', 'Gitea']:
             repository = body.get('repository', {})
             return repository.get('clone_url') or repository.get('html_url') or repository.get('ssh_url')
         return None
