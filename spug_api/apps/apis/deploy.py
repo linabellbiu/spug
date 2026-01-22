@@ -213,6 +213,16 @@ def _normalize_repo_url(url):
             url = url[len(prefix):]
             break
     
+    # 去除URL中的用户名和密码 (username:password@host 或 username@host)
+    if '@' in url:
+        # 找到最后一个@符号（因为密码中可能包含@）
+        at_pos = url.rfind('@')
+        # 检查@之前是否有斜杠，如果有说明@是路径的一部分而不是认证信息
+        slash_before_at = url[:at_pos].rfind('/')
+        if slash_before_at == -1:
+            # @之前没有斜杠，说明是认证信息，去除它
+            url = url[at_pos + 1:]
+    
     # 处理 git@ 格式的 SSH URL (git@github.com:user/repo.git)
     url = url.replace(':', '/')
     
